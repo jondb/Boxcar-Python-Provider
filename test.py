@@ -6,7 +6,7 @@ unit test for boxcargae
 
 import unittest
 from minimock import mock, restore, Mock, TraceTracker, assert_same_trace
-import google.appengine.api
+#import google.appengine.api
 import boxcargae
 
 
@@ -35,10 +35,9 @@ class TestiBoxcarGAENormal(TestBoxcarGAE):
         # mock urlfetch
         trace = TraceTracker()
         response = Response(200) 
-        boxcargae.urlfetch = Mock('boxcargae.urlfetch')
-        boxcargae.urlfetch.fetch = Mock('fetch',
-                                        returns=response, 
-                                        tracker=trace)
+        boxcargae.fetch = Mock('fetch',
+                                returns=response, 
+                                tracker=trace)
         # invite
         self.boxcar.invite('zzzzzzzz@zzzz.zzzz')
         assert_same_trace(trace,
@@ -52,10 +51,9 @@ class TestiBoxcarGAENormal(TestBoxcarGAE):
         # mock urlfetch
         trace = TraceTracker()
         response = Response(200) 
-        boxcargae.urlfetch = Mock('boxcargae.urlfetch')
-        boxcargae.urlfetch.fetch = Mock('fetch',
-                                        returns=response, 
-                                        tracker=trace)
+        boxcargae.fetch = Mock('fetch',
+                                returns=response, 
+                                tracker=trace)
         # send a broadcast                   
         self.boxcar.broadcast('test_normal', 'broadcast message')
         assert_same_trace(trace,
@@ -63,20 +61,21 @@ class TestiBoxcarGAENormal(TestBoxcarGAE):
             "    'http://boxcar.io/devices/providers/xxxxxxxxxxxxxxxxxxxx/notifications/broadcast',\n"
             "    headers={'User-Agent': 'Boxcar_Client'},\n"
             "    method='POST',\n"
-            "    payload='secret=xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx&"
-                         "notification%5Bmessage%5D=broadcast+message&"
+            "    payload='"
+                         "notification%5Bfrom_screen_name%5D=test_normal&"
                          "notification%5Bicon_url%5D=xxxxxxxxx%40xxxxx.xxx&"
-                         "token=xxxxxxxxxxxxxxxxxxxx&"
-                         "notification%5Bfrom_screen_name%5D=test_normal')\n")
+                         "notification%5Bmessage%5D=broadcast+message&"
+                         "secret=xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx&"
+                         "token=xxxxxxxxxxxxxxxxxxxx"
+                         "')\n")
 
     def test_notify(self):
         # mock urlfetch
         trace = TraceTracker()
         response = Response(200) 
-        boxcargae.urlfetch = Mock('boxcargae.urlfetch')
-        boxcargae.urlfetch.fetch = Mock('fetch',
-                                        returns=response, 
-                                        tracker=trace)
+        boxcargae.fetch = Mock('fetch',
+                                returns=response, 
+                                tracker=trace)
         # send a notification
         self.boxcar.notify('yyyyyyyy@yyyyy.yyy',
                            'test_normal',
@@ -87,13 +86,15 @@ class TestiBoxcarGAENormal(TestBoxcarGAE):
             "    'http://boxcar.io/devices/providers/xxxxxxxxxxxxxxxxxxxx/notifications',\n"
             "    headers={'User-Agent': 'Boxcar_Client'},\n"
             "    method='POST',\n"
-            "    payload='notification%5Bfrom_remote_service_id%5D=200&"
-                         "notification%5Bicon_url%5D=xxxxxxxxx%40xxxxx.xxx&"
-                         "secret=xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx&"
-                         "token=xxxxxxxxxxxxxxxxxxxx&"
-                         "notification%5Bmessage%5D=notification+message&"
+            "    payload='"
                          "email=fd2504c1a700746932666efec57e4b92&"
-                         "notification%5Bfrom_screen_name%5D=test_normal')\n")
+                         "notification%5Bfrom_remote_service_id%5D=200&"
+                         "notification%5Bfrom_screen_name%5D=test_normal&"
+                         "notification%5Bicon_url%5D=xxxxxxxxx%40xxxxx.xxx&"
+                         "notification%5Bmessage%5D=notification+message&"
+                         "secret=xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx&"
+                         "token=xxxxxxxxxxxxxxxxxxxx"
+                         "')\n")
 
 
 class TestiBoxcarGAEError(TestBoxcarGAE):
@@ -103,10 +104,9 @@ class TestiBoxcarGAEError(TestBoxcarGAE):
         # mock urlfetch
         response = Response(404) 
         trace = TraceTracker()
-        boxcargae.urlfetch = Mock('boxcargae.urlfetch')
-        boxcargae.urlfetch.fetch = Mock('fetch',
-                                        returns=response, 
-                                        tracker=trace)
+        boxcargae.fetch = Mock('fetch',
+                                returns=response, 
+                                tracker=trace)
         # user not found(404)
         self.assertRaises(boxcargae.BoxcarException, 
                           self.boxcar.invite, 'yyyyyyy@zzzz.zzzz')
@@ -121,10 +121,9 @@ class TestiBoxcarGAEError(TestBoxcarGAE):
         # mock urlfetch
         response = Response(400) 
         trace = TraceTracker()
-        boxcargae.urlfetch = Mock('boxcargae.urlfetch')
-        boxcargae.urlfetch.fetch = Mock('fetch',
-                                        returns=response, 
-                                        tracker=trace)
+        boxcargae.fetch = Mock('fetch',
+                                returns=response, 
+                                tracker=trace)
         # incorrect parameter(400)
         self.assertRaises(boxcargae.BoxcarException, 
                           self.boxcar.notify, 'yyyyyyyy@yyyyy.yyy',
@@ -136,22 +135,23 @@ class TestiBoxcarGAEError(TestBoxcarGAE):
             "    'http://boxcar.io/devices/providers/xxxxxxxxxxxxxxxxxxxx/notifications',\n"
             "    headers={'User-Agent': 'Boxcar_Client'},\n"
             "    method='POST',\n"
-            "    payload='notification%5Bfrom_remote_service_id%5D=400&"
-                         "notification%5Bicon_url%5D=xxxxxxxxx%40xxxxx.xxx&"
-                         "secret=xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx&"
-                         "token=xxxxxxxxxxxxxxxxxxxx&"
-                         "notification%5Bmessage%5D=notification+error&"
+            "    payload='"
                          "email=fd2504c1a700746932666efec57e4b92&"
-                         "notification%5Bfrom_screen_name%5D=test_error')\n")
+                         "notification%5Bfrom_remote_service_id%5D=400&"
+                         "notification%5Bfrom_screen_name%5D=test_error&"
+                         "notification%5Bicon_url%5D=xxxxxxxxx%40xxxxx.xxx&"
+                         "notification%5Bmessage%5D=notification+error&"
+                         "secret=xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx&"
+                         "token=xxxxxxxxxxxxxxxxxxxx"
+                         "')\n")
 
     def test_request_failure(self):
         # mock urlfetch
         response = Response(401) 
         trace = TraceTracker()
-        boxcargae.urlfetch = Mock('boxcargae.urlfetch')
-        boxcargae.urlfetch.fetch = Mock('fetch',
-                                        returns=response, 
-                                        tracker=trace)
+        boxcargae.fetch = Mock('fetch',
+                                returns=response, 
+                                tracker=trace)
         # request failure(401)
         self.assertRaises(boxcargae.BoxcarException, 
                           self.boxcar.notify, 'yyyyyyyy@yyyyy.yyy',
@@ -163,22 +163,23 @@ class TestiBoxcarGAEError(TestBoxcarGAE):
             "    'http://boxcar.io/devices/providers/xxxxxxxxxxxxxxxxxxxx/notifications',\n"
             "    headers={'User-Agent': 'Boxcar_Client'},\n"
             "    method='POST',\n"
-            "    payload='notification%5Bfrom_remote_service_id%5D=401&"
-                         "notification%5Bicon_url%5D=xxxxxxxxx%40xxxxx.xxx&"
-                         "secret=xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx&"
-                         "token=xxxxxxxxxxxxxxxxxxxx&"
-                         "notification%5Bmessage%5D=notification+error&"
+            "    payload='"
                          "email=fd2504c1a700746932666efec57e4b92&"
-                         "notification%5Bfrom_screen_name%5D=test_error')\n")
+                         "notification%5Bfrom_remote_service_id%5D=401&"
+                         "notification%5Bfrom_screen_name%5D=test_error&"
+                         "notification%5Bicon_url%5D=xxxxxxxxx%40xxxxx.xxx&"
+                         "notification%5Bmessage%5D=notification+error&"
+                         "secret=xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx&"
+                         "token=xxxxxxxxxxxxxxxxxxxx"
+                         "')\n")
 
     def test_request_failure_403(self):
         # mock urlfetch
         response = Response(403) 
         trace = TraceTracker()
-        boxcargae.urlfetch = Mock('boxcargae.urlfetch')
-        boxcargae.urlfetch.fetch = Mock('fetch',
-                                        returns=response, 
-                                        tracker=trace)
+        boxcargae.fetch = Mock('fetch',
+                                returns=response, 
+                                tracker=trace)
         # request failure(403)
         self.assertRaises(boxcargae.BoxcarException, 
                           self.boxcar.notify, 'yyyyyyyy@yyyyy.yyy',
@@ -190,22 +191,23 @@ class TestiBoxcarGAEError(TestBoxcarGAE):
             "    'http://boxcar.io/devices/providers/xxxxxxxxxxxxxxxxxxxx/notifications',\n"
             "    headers={'User-Agent': 'Boxcar_Client'},\n"
             "    method='POST',\n"
-            "    payload='notification%5Bfrom_remote_service_id%5D=403&"
-                         "notification%5Bicon_url%5D=xxxxxxxxx%40xxxxx.xxx&"
-                         "secret=xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx&"
-                         "token=xxxxxxxxxxxxxxxxxxxx&"
-                         "notification%5Bmessage%5D=notification+error&"
+            "    payload='"
                          "email=fd2504c1a700746932666efec57e4b92&"
-                         "notification%5Bfrom_screen_name%5D=test_error')\n")
+                         "notification%5Bfrom_remote_service_id%5D=403&"
+                         "notification%5Bfrom_screen_name%5D=test_error&"
+                         "notification%5Bicon_url%5D=xxxxxxxxx%40xxxxx.xxx&"
+                         "notification%5Bmessage%5D=notification+error&"
+                         "secret=xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx&"
+                         "token=xxxxxxxxxxxxxxxxxxxx"
+                         "')\n")
 
     def test_unknown_error(self):
         # mock urlfetch
         response = Response(500) 
         trace = TraceTracker()
-        boxcargae.urlfetch = Mock('boxcargae.urlfetch')
-        boxcargae.urlfetch.fetch = Mock('fetch',
-                                        returns=response, 
-                                        tracker=trace)
+        boxcargae.fetch = Mock('fetch',
+                                returns=response, 
+                                tracker=trace)
         # unknown error(500)
         self.assertRaises(boxcargae.BoxcarException, 
                           self.boxcar.notify, 'yyyyyyyy@yyyyy.yyy',
@@ -217,13 +219,15 @@ class TestiBoxcarGAEError(TestBoxcarGAE):
             "    'http://boxcar.io/devices/providers/xxxxxxxxxxxxxxxxxxxx/notifications',\n"
             "    headers={'User-Agent': 'Boxcar_Client'},\n"
             "    method='POST',\n"
-            "    payload='notification%5Bfrom_remote_service_id%5D=500&"
-                         "notification%5Bicon_url%5D=xxxxxxxxx%40xxxxx.xxx&"
-                         "secret=xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx&"
-                         "token=xxxxxxxxxxxxxxxxxxxx&"
-                         "notification%5Bmessage%5D=unknown+error&"
+            "    payload='"
                          "email=fd2504c1a700746932666efec57e4b92&"
-                         "notification%5Bfrom_screen_name%5D=test_error')\n")
+                         "notification%5Bfrom_remote_service_id%5D=500&"
+                         "notification%5Bfrom_screen_name%5D=test_error&"
+                         "notification%5Bicon_url%5D=xxxxxxxxx%40xxxxx.xxx&"
+                         "notification%5Bmessage%5D=unknown+error&"
+                         "secret=xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx&"
+                         "token=xxxxxxxxxxxxxxxxxxxx"
+                         "')\n")
 
 
 if __name__ == '__main__':

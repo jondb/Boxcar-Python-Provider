@@ -6,8 +6,8 @@ Boxcar client api for providers.
 
 ## Import library functions
 import urllib
+import urllib2
 import logging
-from google.appengine.api import urlfetch
 try:
     from hashlib import md5
 except ImportError:
@@ -17,6 +17,21 @@ except ImportError:
 ## Expose the ApiClient and error classes for importing
 __all__ = ["BoxcarApi", "BoxcarException"]
 
+
+def fetch(url, headers, payload):
+    req = urllib2.Request(url, payload, headers)
+    status = 0
+    try:
+        result = urllib2.urlopen(req)
+    except urllib2.HTTPError, e:
+        status = e.code
+    else:
+        status = result.getcode()
+    class Status(object):
+        status_code = 0
+    result = Status()
+    result.status_code = status
+    return result
 
 class BoxcarApi(object):
     """
@@ -224,11 +239,14 @@ class BoxcarApi(object):
         @return dict
         """
         _url = self.ENDPOINT + self._api_key + "/" + task
-        _post_fields = urllib.urlencode(dict([key, val.encode("utf-8") \
-            if isinstance(val, unicode) else val] \
-            for (key, val) in data.iteritems()))
+        _post_fields_list = []
+        for (key, val) in data.iteritems():
+            if isinstance(val, unicode):
+                val = val.encode("utf-8")
+            _post_fields_list.append((key, val))
+        _post_fields = urllib.urlencode(sorted(_post_fields_list, key=lambda x: x[0]))
 
-        _result = urlfetch.fetch(_url,
+        _result = fetch(_url,
                                 method="POST",
                                 headers={"User-Agent": self.USERAGENT},
                                 payload=_post_fields
