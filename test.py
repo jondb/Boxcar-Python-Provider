@@ -1,13 +1,13 @@
 #!/bin/python
 # -*- coding:utf-8 -*-
 """
-unit test for boxcargae
+unit test for boxcar
 """
 
 import unittest
 from minimock import mock, restore, Mock, TraceTracker, assert_same_trace
 #import google.appengine.api
-import boxcargae
+import boxcar
 
 
 class Response(object):
@@ -15,13 +15,15 @@ class Response(object):
     def __init__(self, code, *args, **kw):
         """ make dummy responce """
         self.status_code = code
+        self.url = ''
+        self.payload = ''
 
 
-class TestBoxcarGAE(unittest.TestCase):
-    """ test BoxcarGAE """
+class Testboxcar(unittest.TestCase):
+    """ test boxcar """
     def setUp(self):
         # create new instance
-        self.boxcar = boxcargae.BoxcarApi('xxxxxxxxxxxxxxxxxxxx',
+        self.boxcar = boxcar.BoxcarApi('xxxxxxxxxxxxxxxxxxxx',
                            'xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx',
                            'xxxxxxxxx@xxxxx.xxx')
 
@@ -29,13 +31,13 @@ class TestBoxcarGAE(unittest.TestCase):
         restore()
 
 
-class TestiBoxcarGAENormal(TestBoxcarGAE):
+class TestiboxcarNormal(Testboxcar):
     """ normal cases class """
     def test_invite(self):
         # mock urlfetch
         trace = TraceTracker()
         response = Response(200) 
-        boxcargae.fetch = Mock('fetch',
+        boxcar.fetch = Mock('fetch',
                                 returns=response, 
                                 tracker=trace)
         # invite
@@ -44,14 +46,14 @@ class TestiBoxcarGAENormal(TestBoxcarGAE):
             "Called fetch(\n"
             "    'http://boxcar.io/devices/providers/xxxxxxxxxxxxxxxxxxxx/notifications/subscribe',\n"
             "    headers={'User-Agent': 'Boxcar_Client'},\n"
-            "    method='POST',\n"
+
             "    payload='email=zzzzzzzz%40zzzz.zzzz')\n")
 
     def test_broadcast(self):
         # mock urlfetch
         trace = TraceTracker()
         response = Response(200) 
-        boxcargae.fetch = Mock('fetch',
+        boxcar.fetch = Mock('fetch',
                                 returns=response, 
                                 tracker=trace)
         # send a broadcast                   
@@ -60,7 +62,7 @@ class TestiBoxcarGAENormal(TestBoxcarGAE):
             "Called fetch(\n"
             "    'http://boxcar.io/devices/providers/xxxxxxxxxxxxxxxxxxxx/notifications/broadcast',\n"
             "    headers={'User-Agent': 'Boxcar_Client'},\n"
-            "    method='POST',\n"
+
             "    payload='"
                          "notification%5Bfrom_screen_name%5D=test_normal&"
                          "notification%5Bicon_url%5D=xxxxxxxxx%40xxxxx.xxx&"
@@ -73,7 +75,7 @@ class TestiBoxcarGAENormal(TestBoxcarGAE):
         # mock urlfetch
         trace = TraceTracker()
         response = Response(200) 
-        boxcargae.fetch = Mock('fetch',
+        boxcar.fetch = Mock('fetch',
                                 returns=response, 
                                 tracker=trace)
         # send a notification
@@ -85,9 +87,9 @@ class TestiBoxcarGAENormal(TestBoxcarGAE):
             "Called fetch(\n"
             "    'http://boxcar.io/devices/providers/xxxxxxxxxxxxxxxxxxxx/notifications',\n"
             "    headers={'User-Agent': 'Boxcar_Client'},\n"
-            "    method='POST',\n"
+
             "    payload='"
-                         "email=fd2504c1a700746932666efec57e4b92&"
+                         "email=yyyyyyyy%40yyyyy.yyy&"
                          "notification%5Bfrom_remote_service_id%5D=200&"
                          "notification%5Bfrom_screen_name%5D=test_normal&"
                          "notification%5Bicon_url%5D=xxxxxxxxx%40xxxxx.xxx&"
@@ -97,35 +99,35 @@ class TestiBoxcarGAENormal(TestBoxcarGAE):
                          "')\n")
 
 
-class TestiBoxcarGAEError(TestBoxcarGAE):
+class TestiboxcarError(Testboxcar):
     """ error cases class """
     def test_invite(self):
         """ error cases class """
         # mock urlfetch
         response = Response(404) 
         trace = TraceTracker()
-        boxcargae.fetch = Mock('fetch',
+        boxcar.fetch = Mock('fetch',
                                 returns=response, 
                                 tracker=trace)
         # user not found(404)
-        self.assertRaises(boxcargae.BoxcarException, 
+        self.assertRaises(boxcar.BoxcarException, 
                           self.boxcar.invite, 'yyyyyyy@zzzz.zzzz')
         assert_same_trace(trace,
             "Called fetch(\n"
             "    'http://boxcar.io/devices/providers/xxxxxxxxxxxxxxxxxxxx/notifications/subscribe',\n"
             "    headers={'User-Agent': 'Boxcar_Client'},\n"
-            "    method='POST',\n"
+
             "    payload='email=yyyyyyy%40zzzz.zzzz')\n")
 
     def test_incorrect_parameter(self):
         # mock urlfetch
         response = Response(400) 
         trace = TraceTracker()
-        boxcargae.fetch = Mock('fetch',
+        boxcar.fetch = Mock('fetch',
                                 returns=response, 
                                 tracker=trace)
         # incorrect parameter(400)
-        self.assertRaises(boxcargae.BoxcarException, 
+        self.assertRaises(boxcar.BoxcarException, 
                           self.boxcar.notify, 'yyyyyyyy@yyyyy.yyy',
                                               'test_error',
                                               'notification error',
@@ -134,9 +136,9 @@ class TestiBoxcarGAEError(TestBoxcarGAE):
             "Called fetch(\n"
             "    'http://boxcar.io/devices/providers/xxxxxxxxxxxxxxxxxxxx/notifications',\n"
             "    headers={'User-Agent': 'Boxcar_Client'},\n"
-            "    method='POST',\n"
+
             "    payload='"
-                         "email=fd2504c1a700746932666efec57e4b92&"
+                         "email=yyyyyyyy%40yyyyy.yyy&"
                          "notification%5Bfrom_remote_service_id%5D=400&"
                          "notification%5Bfrom_screen_name%5D=test_error&"
                          "notification%5Bicon_url%5D=xxxxxxxxx%40xxxxx.xxx&"
@@ -149,11 +151,11 @@ class TestiBoxcarGAEError(TestBoxcarGAE):
         # mock urlfetch
         response = Response(401) 
         trace = TraceTracker()
-        boxcargae.fetch = Mock('fetch',
+        boxcar.fetch = Mock('fetch',
                                 returns=response, 
                                 tracker=trace)
         # request failure(401)
-        self.assertRaises(boxcargae.BoxcarException, 
+        self.assertRaises(boxcar.BoxcarException, 
                           self.boxcar.notify, 'yyyyyyyy@yyyyy.yyy',
                                               'test_error',
                                               'notification error',
@@ -162,9 +164,9 @@ class TestiBoxcarGAEError(TestBoxcarGAE):
             "Called fetch(\n"
             "    'http://boxcar.io/devices/providers/xxxxxxxxxxxxxxxxxxxx/notifications',\n"
             "    headers={'User-Agent': 'Boxcar_Client'},\n"
-            "    method='POST',\n"
+
             "    payload='"
-                         "email=fd2504c1a700746932666efec57e4b92&"
+                         "email=yyyyyyyy%40yyyyy.yyy&"
                          "notification%5Bfrom_remote_service_id%5D=401&"
                          "notification%5Bfrom_screen_name%5D=test_error&"
                          "notification%5Bicon_url%5D=xxxxxxxxx%40xxxxx.xxx&"
@@ -177,11 +179,11 @@ class TestiBoxcarGAEError(TestBoxcarGAE):
         # mock urlfetch
         response = Response(403) 
         trace = TraceTracker()
-        boxcargae.fetch = Mock('fetch',
+        boxcar.fetch = Mock('fetch',
                                 returns=response, 
                                 tracker=trace)
         # request failure(403)
-        self.assertRaises(boxcargae.BoxcarException, 
+        self.assertRaises(boxcar.BoxcarException, 
                           self.boxcar.notify, 'yyyyyyyy@yyyyy.yyy',
                                               'test_error',
                                               'notification error',
@@ -190,9 +192,9 @@ class TestiBoxcarGAEError(TestBoxcarGAE):
             "Called fetch(\n"
             "    'http://boxcar.io/devices/providers/xxxxxxxxxxxxxxxxxxxx/notifications',\n"
             "    headers={'User-Agent': 'Boxcar_Client'},\n"
-            "    method='POST',\n"
+
             "    payload='"
-                         "email=fd2504c1a700746932666efec57e4b92&"
+                         "email=yyyyyyyy%40yyyyy.yyy&"
                          "notification%5Bfrom_remote_service_id%5D=403&"
                          "notification%5Bfrom_screen_name%5D=test_error&"
                          "notification%5Bicon_url%5D=xxxxxxxxx%40xxxxx.xxx&"
@@ -205,11 +207,11 @@ class TestiBoxcarGAEError(TestBoxcarGAE):
         # mock urlfetch
         response = Response(500) 
         trace = TraceTracker()
-        boxcargae.fetch = Mock('fetch',
+        boxcar.fetch = Mock('fetch',
                                 returns=response, 
                                 tracker=trace)
         # unknown error(500)
-        self.assertRaises(boxcargae.BoxcarException, 
+        self.assertRaises(boxcar.BoxcarException, 
                           self.boxcar.notify, 'yyyyyyyy@yyyyy.yyy',
                                               'test_error',
                                               'unknown error',
@@ -218,9 +220,9 @@ class TestiBoxcarGAEError(TestBoxcarGAE):
             "Called fetch(\n"
             "    'http://boxcar.io/devices/providers/xxxxxxxxxxxxxxxxxxxx/notifications',\n"
             "    headers={'User-Agent': 'Boxcar_Client'},\n"
-            "    method='POST',\n"
+
             "    payload='"
-                         "email=fd2504c1a700746932666efec57e4b92&"
+                         "email=yyyyyyyy%40yyyyy.yyy&"
                          "notification%5Bfrom_remote_service_id%5D=500&"
                          "notification%5Bfrom_screen_name%5D=test_error&"
                          "notification%5Bicon_url%5D=xxxxxxxxx%40xxxxx.xxx&"
