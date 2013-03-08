@@ -19,18 +19,22 @@ __all__ = ["BoxcarApi", "BoxcarException"]
 
 
 def fetch(url, headers, payload):
+    class Status(object):
+        status_code = 0
+        reason = ''
+        payload = ''
+        url = ''
+    result = Status()
+    result.url = url
+    result.payload = payload
     req = urllib2.Request(url, payload, headers)
-    status = 0
     try:
         result = urllib2.urlopen(req)
     except urllib2.HTTPError, e:
-        status = e.code
+        result.status_code = e.code
+        result.reason = str(e)
     else:
-        status = result.getcode()
-    class Status(object):
-        status_code = 0
-    result = Status()
-    result.status_code = status
+        result.status_code = result.getcode()
     return result
 
 class BoxcarApi(object):
@@ -178,7 +182,8 @@ class BoxcarApi(object):
         _notification = {
             "token": self._api_key,
             "secret": self._secret,
-            "email": _md5_email,
+            #"email": _md5_email,
+            "email": email,
             "notification[from_screen_name]": name,
             "notification[message]": message,
             "notification[from_remote_service_id]": message_id,
@@ -210,8 +215,8 @@ class BoxcarApi(object):
             return True
         elif (result.status_code == 400):
             # it is because you failed to send the proper parameters
-            raise BoxcarException("Incorrect parameters passed %d" %
-                                  result.status_code)
+            raise BoxcarException("Incorrect parameters passed %d\n%s\n%s" %
+                                  (result.status_code, result.url, result.payload))
         elif (result.status_code == 401):
             # For request failures,
             # you will receive either HTTP status 403 or 401.
@@ -219,14 +224,15 @@ class BoxcarApi(object):
             # it is because you are passing in either an invalid token,
             # or the user has not added your service.
             # Also, if you try and send the same notification id twice.
-            raise BoxcarException("Request failed (Probably your fault) %d" %
-                                  result.status_code)
+            raise BoxcarException("Request failed (Probably your fault) %d\n%s\n%s" %
+                                  (result.status_code, result.url, result.payload))
         elif (result.status_code == 403):
-            raise BoxcarException("Request failed (General) %d" %
-                                  result.status_code)
+            raise BoxcarException("Request failed (General) %d\n%s\n%s" %
+                                  (result.status_code, result.url, result.payload))
         else:
             # Unkown code
-            raise BoxcarException("Unknown response: %d" % result.status_code)
+            raise BoxcarException("Unknown response: %d\n%s\n%s" % (result.status_code, result.url, 
+                                                                    result.payload))
 
     def _http_post(self, task, data):
         """
@@ -247,10 +253,9 @@ class BoxcarApi(object):
         _post_fields = urllib.urlencode(sorted(_post_fields_list, key=lambda x: x[0]))
 
         _result = fetch(_url,
-                                method="POST",
-                                headers={"User-Agent": self.USERAGENT},
-                                payload=_post_fields
-        )
+                        headers={"User-Agent": self.USERAGENT},
+                        payload=_post_fields
+                        )
         return _result
 
 
